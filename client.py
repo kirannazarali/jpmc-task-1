@@ -35,25 +35,42 @@ def getDataPoint(quote):
     stock = quote['stock']
     bid_price = float(quote['top_bid']['price'])
     ask_price = float(quote['top_ask']['price'])
-    price = bid_price
+    price = (bid_price + ask_price)/2.0 #price of a stock = average of bid and ask
     return stock, bid_price, ask_price, price
 
 
 def getRatio(price_a, price_b):
     """ Get ratio of price_a and price_b """
     """ ------------- Update this function ------------- """
-    return 1
+    if price_b == 0:#prevent division by 0
+        return 0
+    return float(price_a)/float(price_b)
+
 
 
 # Main
 if __name__ == "__main__":
     # Query the price once every N seconds.
+    stock_price_dict = {} # dictionary to store price of stock by stock updated during each query
+    curr_ratio = ("StockA", "StockB", 0.0)
     for _ in iter(range(N)):
         quotes = json.loads(urllib.request.urlopen(QUERY.format(random.random())).read())
 
         """ ----------- Update to get the ratio --------------- """
         for quote in quotes:
             stock, bid_price, ask_price, price = getDataPoint(quote)
+            stock_price_dict[stock] = price # store 1 stock & price from quote
             print("Quoted %s at (bid:%s, ask:%s, price:%s)" % (stock, bid_price, ask_price, price))
 
-        print("Ratio %s" % getRatio(price, price))
+        print("We have %d stocks in this query" % len(stock_price_dict))
+
+        # Find ratio of each pair in stock_price_dict (or i.e. all the stocks and prices we know
+        # above from current query and all previous queries)
+        stock_price_list = list(stock_price_dict.items())
+        for index1 in range(len(stock_price_list)):
+            stock1,price1 = stock_price_list[index1]
+            for index2 in range(index1, len(stock_price_list)):
+                stock2, price2 = stock_price_list[index2]
+                if stock1 != stock2:
+                    print("Ratio %s of %s and %s" %(getRatio(price1, price2), stock1, stock2))
+
